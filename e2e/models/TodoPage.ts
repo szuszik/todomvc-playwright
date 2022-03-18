@@ -9,7 +9,7 @@ export class TodoPage {
 
     get todoInputField() { return this.page.locator('input[placeholder="What needs to be done?"]') }
     
-    get todoList () { return this.page.locator('ul.todo-list > li') }
+    get todoListItems () { return this.page.locator('ul.todo-list > li') }
 
     get todoCount () { return this.page.locator('.todo-count') }
 

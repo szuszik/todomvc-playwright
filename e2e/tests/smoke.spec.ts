@@ -23,14 +23,14 @@ test.describe('Smoke tests for TodoMVC', () => {
         await todoPage.createTodo(data.myFirstTodo)
         await expect(todoPage.findTodo(data.myFirstTodo), 'todo should be visible').toBeVisible()
         await expect(todoPage.todoCount, 'left todo count should be 1').toHaveText('1 item left')
-        await expect(todoPage.todoList).toHaveCount(1)
+        await expect(todoPage.todoListItems).toHaveCount(1)
     })
 
     test('User should be able to create multiple todos', async () => {
         await todoPage.createTodo(data.myFirstTodo)
         await todoPage.createTodo(data.mySecondTodo)
-        await expect(todoPage.todoCount, 'left todo count should be 1').toHaveText('2 items left')
-        await expect(todoPage.todoList).toHaveCount(2)
+        await expect(todoPage.todoCount, 'left todo count should be 2').toHaveText('2 items left')
+        await expect(todoPage.todoListItems).toHaveCount(2)
     })
 
     test('User should be able to delete a todo', async () => {
