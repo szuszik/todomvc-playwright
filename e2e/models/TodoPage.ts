@@ -1,52 +1,98 @@
-import { Page } from "@playwright/test"
+import { Page } from '@playwright/test';
+import { PageModel } from './PageModel';
+import { Locator } from 'playwright';
 
-export class TodoPage {
-    readonly page: Page
+export class TodoPage extends PageModel {
+  constructor(page: Page) {
+    super(page);
+  }
 
-    constructor(page: Page) {
-        this.page = page
+  get todoInputField(): Locator {
+    return this.page.getByPlaceholder('What needs to be done?');
+  }
+
+  get todoListItems(): Locator {
+    return this.page.locator('ul.todo-list > li');
+  }
+
+  get todoCount(): Locator {
+    return this.page.locator('.todo-count');
+  }
+
+  get allTodosFilter(): Locator {
+    return this.page.getByRole('link', { name: 'All' });
+  }
+
+  get activeTodosFilter(): Locator {
+    return this.page.getByRole('link', { name: 'Active' });
+  }
+
+  get completedTodosFilter(): Locator {
+    return this.page.getByRole('link', { name: 'Completed' });
+  }
+
+  get clearCompletedTodosButton(): Locator {
+    return this.page.getByRole('button', { name: 'Clear completed' });
+  }
+
+  findTodo(text: string): Locator {
+    return this.page.locator('li', { hasText: text });
+  }
+
+  async createTodo(todoValue: string): Promise<void> {
+    await this.todoInputField.click();
+    await this.todoInputField.type(todoValue);
+    await this.page.keyboard.press('Enter');
+  }
+
+  async deleteTodo(todoValue: string): Promise<void> {
+    const todo = this.findTodo(todoValue);
+    const deleteTodoButton = todo.locator('button.destroy');
+    await todo.hover();
+    await deleteTodoButton.click();
+  }
+
+  async editTodo(todoValue: string, newTodoValue: string): Promise<void> {
+    const todo = this.findTodo(todoValue);
+    const label = todo.locator('label');
+    await label.dblclick();
+    const editTodoLabel = todo.locator('.edit');
+    await editTodoLabel.fill('');
+    await editTodoLabel.type(newTodoValue);
+    await editTodoLabel.press('Enter');
+  }
+
+  async createMultipleTodos(todoList: string[]): Promise<void> {
+    for (const todoValue of todoList) {
+      await this.createTodo(todoValue);
     }
+  }
 
-    get todoInputField() { return this.page.locator('input[placeholder="What needs to be done?"]') }
-    
-    get todoListItems () { return this.page.locator('ul.todo-list > li') }
-
-    get todoCount () { return this.page.locator('.todo-count') }
-
-    async goto() {
-        await this.page.goto('https://todomvc.com/examples/typescript-react/')
+  async toggleMultipleTodos(todoList: string[]): Promise<void> {
+    for (const todoValue of todoList) {
+      await this.toggleTodo(todoValue);
     }
+  }
 
-    findTodo(text: string) {
-        return this.page.locator('li', { hasText: text })
-    }
+  async toggleTodo(todoValue: string): Promise<void> {
+    const todo = this.findTodo(todoValue);
+    const todoCheckbox = todo.locator('input[type="checkbox"]');
+    await todoCheckbox.click();
+  }
 
-    async createTodo(text: string) {
-        await this.todoInputField.click()
-        await this.todoInputField.type(text)
-        await this.page.keyboard.press('Enter')
-    }
+  async filterTodoListByOption(option: 'All' | 'Completed' | 'Active'): Promise<void> {
+    const filters: Map<typeof option, Locator> = new Map([
+      ['All', this.allTodosFilter],
+      ['Completed', this.completedTodosFilter],
+      ['Active', this.activeTodosFilter],
+    ]);
 
-    async deleteTodo(text: string) {
-        const todo = this.findTodo(text)
-        const delTodo = todo.locator('button.destroy')
-        await todo.hover()
-        await delTodo.click()
-    }
+    const selectedFilter = filters.get(option);
 
-    async editTodo(text: string, newText: string) {
-        const todo = this.findTodo(text)
-        const label = todo.locator('label')
-        await label.dblclick()
-        const editLabel = todo.locator('.edit')
-        await editLabel.fill('')
-        await editLabel.type(newText)
-        await editLabel.press('Enter')
-    }
-    
-    async toggleTodo(text: string) {
-        const todo = this.findTodo(text)
-        const checkbox = todo.locator('input[type="checkbox"]')
-        await checkbox.click()
-    }
+    await selectedFilter!.click();
+  }
+
+  async clearCompletedTodos(): Promise<void> {
+    await this.clearCompletedTodosButton.click();
+  }
 }
