@@ -4,13 +4,9 @@ import { data } from '../utils/data';
 
 const todoArray = [data.myFirstTodo, data.mySecondTodo, data.myThirdTodo];
 
-test.describe('Smoke tests for TodoMVC', () => {
+test.describe('TodoMVC tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/todomvc');
-  });
-
-  test.afterAll(async ({ browser }) => {
-    await browser.close();
   });
 
   test('user should be able to create a todo', async ({ todoPage }) => {
@@ -22,6 +18,7 @@ test.describe('Smoke tests for TodoMVC', () => {
 
   test('text field should be cleared after adding todo', async ({ todoPage }) => {
     await todoPage.createTodo(data.myFirstTodo);
+    await expect(todoPage.todoInputField).toBeEmpty();
   });
 
   test('user should be able to create multiple todos', async ({ todoPage }) => {
@@ -32,13 +29,28 @@ test.describe('Smoke tests for TodoMVC', () => {
 
   test('user should be able to delete a todo', async ({ todoPage }) => {
     await todoPage.createMultipleTodos([data.myFirstTodo, data.mySecondTodo]);
-    await expect(todoPage.findTodo(data.myEditedTodo), 'todo should not be visible').not.toBeVisible();
+    await todoPage.deleteTodo(data.myFirstTodo);
+    await expect(todoPage.findTodo(data.myFirstTodo), 'todo should not be visible').not.toBeVisible();
   });
 
   test('user should be able to edit a todo', async ({ todoPage }) => {
     await todoPage.createTodo(data.myFirstTodo);
     await todoPage.editTodo(data.myFirstTodo, data.myEditedTodo);
     await expect(todoPage.findTodo(data.myEditedTodo), 'todo should be visible').toBeVisible();
+  });
+
+  test('user should be able to edit a todo with desired substring', async ({ todoPage }) => {
+    const [todoValue, remainingTodo, todoEditedSubstring, expectedTodo] = [
+      'My initial todo, nothing special.',
+      'My initial todo',
+      ', this part has been edited.',
+      'My initial todo, this part has been edited.',
+    ];
+
+    await todoPage.createTodo(todoValue);
+    await todoPage.editTodoWithSubstring(todoValue, remainingTodo, todoEditedSubstring);
+
+    await expect(todoPage.todoListItems.nth(0)).toHaveText(expectedTodo);
   });
 
   test('user should be able to toggle todo as completed', async ({ todoPage }) => {
@@ -54,6 +66,24 @@ test.describe('Smoke tests for TodoMVC', () => {
     await todoPage.toggleTodo(data.myCompletedTodo);
     await expect(todoPage.findTodo(data.myCompletedTodo), 'li should have proper css').not.toHaveClass('completed');
     await expect(todoPage.todoCount, 'left todo count should be 1').toHaveText('1 item left');
+  });
+
+  test('user should be able to mark all todos as completed', async ({ todoPage }) => {
+    await todoPage.createMultipleTodos(todoArray);
+    await todoPage.markAllAsCompleted();
+
+    for (const todo of await todoPage.todoListItems.all()) {
+      await expect(todo).toHaveClass('completed');
+    }
+  });
+
+  test('user should be able to mark all todos as incompleted', async ({ todoPage }) => {
+    await todoPage.createMultipleTodos(todoArray);
+    await todoPage.markAllAsCompleted(2);
+
+    for (const todo of await todoPage.todoListItems.all()) {
+      await expect(todo).not.toHaveClass('completed');
+    }
   });
 
   test('filter "All" should be selected by default', async ({ todoPage }) => {

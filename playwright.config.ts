@@ -14,7 +14,7 @@ const config: PlaywrightTestConfig = {
   reporter: 'html',
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : undefined,
-  timeout: 45 * 1000,
+  timeout: 10 * 1000,
   forbidOnly: !!process.env.CI,
   expect: {
     timeout: 2000,
@@ -30,14 +30,14 @@ const config: PlaywrightTestConfig = {
       name: 'firefox',
       use: {
         browserName: 'firefox',
-      }
+      },
     },
     {
       name: 'webkit',
       use: {
         browserName: 'webkit',
-      }
-    }
-  ]
+      },
+    },
+  ],
 };
-export default defineConfig(config)
+export default defineConfig(config);
