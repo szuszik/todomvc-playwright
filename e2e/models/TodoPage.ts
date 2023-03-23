@@ -12,11 +12,11 @@ export class TodoPage extends PageModel {
   }
 
   get todoListItems(): Locator {
-    return this.page.locator('ul.todo-list > li');
+    return this.page.getByTestId('todo-item');
   }
 
   get todoCount(): Locator {
-    return this.page.locator('.todo-count');
+    return this.page.getByTestId('todo-count');
   }
 
   get allTodosFilter(): Locator {
@@ -35,8 +35,16 @@ export class TodoPage extends PageModel {
     return this.page.getByRole('button', { name: 'Clear completed' });
   }
 
+  get markAllAsCompletedButton(): Locator {
+    return this.page.getByLabel('Mark all as complete');
+  }
+
+  get deleteTodoButton(): Locator {
+    return this.page.getByRole('button', { name: 'Delete' });
+  }
+
   findTodo(text: string): Locator {
-    return this.page.locator('li', { hasText: text });
+    return this.page.getByTestId('todo-item').filter({ hasText: text });
   }
 
   async createTodo(todoValue: string): Promise<void> {
@@ -47,18 +55,30 @@ export class TodoPage extends PageModel {
 
   async deleteTodo(todoValue: string): Promise<void> {
     const todo = this.findTodo(todoValue);
-    const deleteTodoButton = todo.locator('button.destroy');
-    await todo.hover();
-    await deleteTodoButton.click();
+
+    await todo.hover({ noWaitAfter: false });
+    await this.deleteTodoButton.click();
   }
 
   async editTodo(todoValue: string, newTodoValue: string): Promise<void> {
     const todo = this.findTodo(todoValue);
-    const label = todo.locator('label');
-    await label.dblclick();
-    const editTodoLabel = todo.locator('.edit');
+    await todo.dblclick();
+    const editTodoLabel = todo.getByLabel('Edit');
     await editTodoLabel.fill('');
     await editTodoLabel.type(newTodoValue);
+    await editTodoLabel.press('Enter');
+  }
+
+  async editTodoWithSubstring(todoValue: string, remainingTodo: string, todoValueNewSubstring: string = '') {
+    const todo = this.findTodo(todoValue);
+    await todo.dblclick();
+    const editTodoLabel = todo.getByLabel('Edit');
+
+    do {
+      await editTodoLabel.press('Backspace');
+    } while ((await editTodoLabel.inputValue()) !== remainingTodo);
+
+    await editTodoLabel.type(todoValueNewSubstring);
     await editTodoLabel.press('Enter');
   }
 
@@ -76,7 +96,7 @@ export class TodoPage extends PageModel {
 
   async toggleTodo(todoValue: string): Promise<void> {
     const todo = this.findTodo(todoValue);
-    const todoCheckbox = todo.locator('input[type="checkbox"]');
+    const todoCheckbox = todo.getByRole('checkbox', { name: 'Toggle Todo' });
     await todoCheckbox.click();
   }
 
@@ -94,5 +114,11 @@ export class TodoPage extends PageModel {
 
   async clearCompletedTodos(): Promise<void> {
     await this.clearCompletedTodosButton.click();
+  }
+
+  async markAllAsCompleted(clickCount?: number): Promise<void> {
+    await this.markAllAsCompletedButton.click({
+      clickCount: clickCount ? clickCount : 1,
+    });
   }
 }
